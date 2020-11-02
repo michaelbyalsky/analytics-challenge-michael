@@ -6,8 +6,8 @@ You will build analytics system that would present usage analytics about a websi
 
 ## Getting Started
 
-Clone this repo and build your project on top of it.  
-
+Fork this repo and build your project on top of it.   
+you can use `npm run init` __in the project root__ to download both the client and server dependencies, or :   
 - Setup server  
     1. `cd server`  
     3. `npm i` 
@@ -23,16 +23,16 @@ Clone this repo and build your project on top of it.
   
 ### Other useful commands:
 - /server
-    - `npm run db:seed` - reseed the database (does not affect tests.) you can determine different parameters in [.env](server/.env). Useful in case the existing data is has very old dates and you want newer entries. 
+    - `npm run db:seed` - reseed the database (does not affect tests.) you can determine different parameters in [.env](server/.env). Useful in case the existing data is has very old dates and you want newer entries, or add properties you want to the data.
 
 ## Admin Page Requirements:
 
- - Make the following layout for tiles and make it compatible with different tile sizes and different screen sizes.
+ - Use the route '/admin' Make the following layout for tiles and make it compatible with different tile sizes and different screen sizes.
 
 ![](https://i.imgur.com/gtPzvXP.jpg)
 
  - Add controls for time-ranges in relevant charts (you can implement it in any way that still works with the [default requirements](backend.md)) 
-
+### [Backend Requirements](backend.md)
 ### Tiles to present:
  - Showing events on Google Map (cluster events).  
 you can use whichever library you choose, but [this one](https://www.npmjs.com/package/@react-google-maps/api) is recommended) 
@@ -49,7 +49,7 @@ you can use whichever library you choose, but [this one](https://www.npmjs.com/p
 ![How Startups Can Do Better Cohort Analyses – Philosophical Hacker](https://www.philosophicalhacker.com/images/cohort-analysis.png)
  - Showing log of all events - search option and filter by event name using regex. 
  
- The `Events Log` should load only 10 events, and load more only when the client scrolls down the log. 
+ The `Events Log` should load only 10 events, and load more only when the client scrolls down the log, order by time. 
 ![](https://i.imgur.com/hFlqDbG.png)
  - Showing page views for on each page.
  - Showing pie charts with users by operating system usage.
@@ -99,6 +99,7 @@ note- the repo uses 'husky' and you might find you can't push to github while th
 ## Bonuses
   - Make your own custom tiles.
   - Make the tiles resizable.
+  - Creating piece of code that send events from clients to the server and save it.
   - Add an option to change chart type (pie | bars | line) in the same tile 
   - Make the tiles move by drag and drop.
   - Make the time-frame adjustable on all charts

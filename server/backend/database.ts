@@ -1,6 +1,7 @@
 import path from "path";
 import bcrypt from "bcryptjs";
 import fs from "fs";
+import moment from "moment";
 import { v4 } from "uuid";
 import {
   uniqBy,
@@ -49,7 +50,7 @@ import {
   NotificationResponseItem,
   TransactionQueryPayload,
   DefaultPrivacyLevel,
-  Event
+  Event,
 } from "../../client/src/models";
 import Fuse from "fuse.js";
 import {
@@ -69,7 +70,6 @@ import {
   isCommentNotification,
 } from "../../client/src/utils/transactionUtils";
 import { DbSchema } from "../../client/src/models/db-schema";
-
 
 export type TDatabase = {
   users: User[];
@@ -106,6 +106,110 @@ export const seedDatabase = () => {
   // seed database with test data
   db.setState(testSeed).write();
   return;
+};
+
+export const getAllEvents = () => db.get(EVENT_TABLE).value();
+
+const OneHour: number = 1000 * 60 * 60;
+const OneDay: number = OneHour * 24;
+const OneWeek: number = OneDay * 7;
+
+export const getWeekEvents = (offset: number) => {
+  let offsetInMilliseconds = offset * OneDay;
+  let currentDayInMilliseconds = moment().startOf("day").valueOf();
+  console.log(moment(currentDayInMilliseconds));
+  let startDate = currentDayInMilliseconds - offsetInMilliseconds;
+  let endDate = startDate - OneDay * 7;
+  let filtered = db
+    .get(EVENT_TABLE)
+    .filter((event: Event) => {
+      return event.date < startDate && event.date > endDate;
+    })
+    .sort((event1: Event, event2: Event) => {
+      return event1.date - event2.date;
+    })
+    .groupBy((event: Event) => {
+      const currentDate = moment(event.date);
+      return `${currentDate.format('YYYY')}/${currentDate.format('M')}/${currentDate.format('D')}`;
+    })
+    .value();
+
+  for (let key in filtered) {
+    filtered[key] = uniqBy('session_id', filtered[key])
+  }
+  
+  interface AnswerArray {
+    date: string;
+    count: number;
+  }
+
+  let answerArray: AnswerArray[] = [];
+
+  let index = 0;
+  for (let key in filtered) {
+    answerArray[index] = { date: key, count: filtered[key].length };
+    index++;
+  }
+
+  return answerArray;
+};
+
+export const createEvent = (event: Event) => {
+  db.get(EVENT_TABLE).push(event).write();
+};
+
+
+export const getEventsByHours = (offset: number) => {
+  let offsetInMilliseconds = offset * OneDay;
+  let currentStartDayInMilliseconds = moment().startOf("day").valueOf();
+  let currentEndDayInMilliseconds = moment().endOf("day").valueOf();
+  let startDate = currentStartDayInMilliseconds - offsetInMilliseconds;
+  let endDate = currentEndDayInMilliseconds - offsetInMilliseconds;
+  console.log(moment(startDate));
+  console.log(moment(endDate));
+  let filtered = db
+    .get(EVENT_TABLE)
+    .filter((event: Event) => {
+
+      return event.date > startDate && event.date < endDate;
+    })
+    .sort((event1: Event, event2: Event) => {
+      return event1.date - event2.date;
+    })
+    .groupBy((event: Event) => {
+      return moment(event.date).hour() > 9
+        ? `${moment(event.date).hour()}:00`
+        : `0${moment(event.date).hour()}:00`;
+    })
+    .value();
+
+  for (let key in filtered) {
+    filtered[key] = filtered[key].filter((value, i) => filtered[key].indexOf(value) === i);
+  }
+  interface HoursArray {
+    hour: string;
+    count: number;
+  }
+
+  let hoursArray: HoursArray[] = [];
+
+  for (let i = 0; i < 24; i++) {
+    if (i < 10) {
+      hoursArray.push({ hour: `0${i}:00`, count: 0 });
+    } else {
+      hoursArray.push({ hour: `${i}:00`, count: 0 });
+    }
+  }
+
+  for (let key in filtered) {
+    for (let i = 0; i < hoursArray.length; i++) {
+      if (key === hoursArray[i].hour) {
+        hoursArray[i] = { hour: key, count: filtered[key].length };
+      }
+    }
+  }
+
+  return hoursArray;
 };
 
 export const getAllUsers = () => db.get(USER_TABLE).value();
@@ -862,6 +966,5 @@ export const getTransactionsBy = (key: string, value: string) =>
 
 /* istanbul ignore next */
 export const getTransactionsByUserId = (userId: string) => getTransactionsBy("receiverId", userId);
-
 
 export default db;

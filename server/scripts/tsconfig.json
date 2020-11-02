@@ -2,6 +2,7 @@
   "extends": "../tsconfig.json",
   "include": ["./*/*.ts", "../src", "../models"],
   "exclude": [],
+  "suppressImplicitAnyIndexErrors": true,
   "compilerOptions": {
     "types": ["node"],
     "isolatedModules": false

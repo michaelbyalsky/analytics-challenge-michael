@@ -4,7 +4,7 @@ import express from "express";
 import { Request, Response } from "express";
 
 // some useful database functions in here:
-import { getAllEvents, getWeekEvents, getEventsByHours, createEvent } from "./database";
+import { getAllEvents, getWeekEvents, getEventsByHours, createEvent, getWeeklyRetention } from "./database";
 import { Event, weeklyRetentionObject } from "../../client/src/models/event";
 import { ensureAuthenticated, validateMiddleware } from "./helpers";
 
@@ -43,7 +43,6 @@ router.get("/all", (req: Request, res: Response) => {
 router.get("/all-filtered", (req: Request, res: Response) => {
   try {
     const filters: Filter = req.query;
-    console.log(req.query);
     let filteredData: any[] = getAllEvents();
 
     if (filters.search && filters.search !== "") {
@@ -70,8 +69,7 @@ router.get("/all-filtered", (req: Request, res: Response) => {
     }
 
     if (filters.sorting) {
-      filteredData.sort((event1: Event, event2: Event) => {
-        console.log(filters.sorting[0]);
+      filteredData = filteredData.sort((event1: Event, event2: Event) => {
         return filters.sorting[0] === "+" ? event1.date - event2.date : event2.date - event1.date;
       });
     }
@@ -112,10 +110,20 @@ router.get("/week", (req: Request, res: Response) => {
   res.send("/week");
 });
 
+const OneHour: number = 1000 * 60 * 60;
+const OneDay: number = OneHour * 24;
+const OneWeek: number = OneDay * 7;const today = new Date (new Date().toDateString()).getTime()+6*OneHour
+const myDayZero = today-5*OneWeek
+
 router.get("/retention", (req: Request, res: Response) => {
   const { dayZero } = req.query;
-  res.send("/retention");
+  console.log(dayZero);
+  
+  let weeklyRetention = getWeeklyRetention(dayZero || myDayZero)
+  res.json(weeklyRetention);
 });
+
+
 router.get("/:eventId", (req: Request, res: Response) => {
   res.send("/:eventId");
 });

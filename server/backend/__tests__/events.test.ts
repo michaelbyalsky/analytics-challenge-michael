@@ -138,7 +138,7 @@ describe("main test", () => {
     expect(events.events[0].date).toBeGreaterThan(events2.events[0].date)
     expect(events.events[0].date).toBeGreaterThan(events.events[4].date)
     expect(events2.events[1].date).toBeGreaterThan(events2.events[0].date)
-  })
+  }, 10000)
 
   it("can post new event", async () => {
     await request(app).post("/events").send(mockData.events[0]).expect(200);

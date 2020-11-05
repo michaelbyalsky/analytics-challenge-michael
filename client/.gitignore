@@ -12,6 +12,7 @@
 /build
 
 # misc
+secret.js
 .DS_Store
 .idea
 

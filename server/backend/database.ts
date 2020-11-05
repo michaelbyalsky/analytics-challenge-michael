@@ -133,11 +133,6 @@ export const getWeekEvents = (offset: number) => {
       return moment(date).format("DD-MM-YYYY");
     })
     .value();
-
-    // let sessions = []
-    // for (let key in datesArray) {      
-    //   if (sessions.indexOf(datesArray[key].session_id))
-    // }
   
 
 

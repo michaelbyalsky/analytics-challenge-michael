@@ -19,7 +19,8 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "jsx": "react",
-    "isolatedModules": true
+    "isolatedModules": true,
+    "suppressImplicitAnyIndexErrors": false
   },
   "files":["backend/__tests__/events.test.ts"],
   "include": [

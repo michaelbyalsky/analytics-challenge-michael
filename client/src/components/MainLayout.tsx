@@ -97,9 +97,9 @@ const MainLayout: React.FC<Props> = ({ children, notificationsService, authServi
       </Grid>
           </Grid>
         </Container>
-        <footer>
+        {/* <footer>
       <Footer />
-        </footer>
+        </footer> */}
       </main>
     </>
   );

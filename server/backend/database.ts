@@ -1,6 +1,7 @@
 import path from "path";
 import bcrypt from "bcryptjs";
 import fs from "fs";
+import moment from "moment";
 import { v4 } from "uuid";
 import {
   uniqBy,
@@ -49,7 +50,7 @@ import {
   NotificationResponseItem,
   TransactionQueryPayload,
   DefaultPrivacyLevel,
-  Event
+  Event,
 } from "../../client/src/models";
 import Fuse from "fuse.js";
 import {
@@ -69,7 +70,6 @@ import {
   isCommentNotification,
 } from "../../client/src/utils/transactionUtils";
 import { DbSchema } from "../../client/src/models/db-schema";
-
 
 export type TDatabase = {
   users: User[];
@@ -106,6 +106,231 @@ export const seedDatabase = () => {
   // seed database with test data
   db.setState(testSeed).write();
   return;
+};
+
+export const getAllEvents = () => db.get(EVENT_TABLE).value();
+
+const OneHour: number = 1000 * 60 * 60;
+const OneDay: number = OneHour * 24;
+const OneWeek: number = OneDay * 7;
+
+export const getWeekEvents = (offset: number) => {
+  const Offset = OneDay * offset;
+  let currentDayInMilliseconds = moment(new Date()).valueOf();
+  let endDate = moment(currentDayInMilliseconds - Offset)
+    .endOf("day")
+    .valueOf();
+  let startDate = moment(currentDayInMilliseconds - OneDay * 6 - Offset)
+    .startOf("day")
+    .valueOf();
+  console.log(moment(startDate));
+  const datesArray = db
+    .get(EVENT_TABLE)
+    .filter((event: Event) => event.date > startDate && event.date <= endDate)
+    .sort((e1: Event, e2: Event) => e1.date - e2.date)
+    .groupBy((event: Event) => {
+      const date = new Date(event.date);
+      return moment(date).format("DD-MM-YYYY");
+    })
+    .value();
+  
+
+
+    for (let key in datesArray) {      
+      datesArray[key] = datesArray[key].filter((e: any, position: any, self: any) => {
+        return self.findIndex((ev: any) => ev.session_id === e.session_id) === position
+      })
+    }
+  
+
+  interface AnswerArray {
+    date: string;
+    count: number;
+  }
+
+  let answerArray: AnswerArray[] = [];
+
+  for (let i = 0; i < 7; i++) {
+    answerArray[i] = { date: moment(startDate + OneHour + OneDay*i).format('YYYY-MM-DD'), count: 0 }
+  }
+
+  console.log(answerArray);
+  
+
+  let index = 0;
+  for (let key in datesArray) {
+    answerArray[index] = { date: key, count: datesArray[key].length };
+    index++;
+  }
+
+  return answerArray;
+
+  // let offsetInMilliseconds = offset * OneDay;
+  // console.log(moment(currentDayInMilliseconds));
+  // let startDate = moment(currentDayInMilliseconds - offsetInMilliseconds).endOf("day").valueOf();
+  // let endDate = moment(startDate - OneDay * 7).startOf('day').valueOf();
+  // console.log(moment(startDate));
+  // console.log(moment(endDate));
+
+  // let filtered = db
+  //   .get(EVENT_TABLE)
+  //   .filter((event: Event) => {
+  //     return event.date < startDate && event.date > endDate;
+  //   })
+  //   .sort((event1: Event, event2: Event) => {
+  //     return event1.date - event2.date;
+  //   })
+  //   .groupBy((event: Event) => {
+  //     const currentDate = moment(event.date);
+  //     return currentDate.format("YYYY/MM/DD");
+  //   })
+  //   .value();
+
+  // for (let key in filtered) {
+  //   filtered[key] = uniqBy("session_id", filtered[key]);
+  // }
+};
+
+export const createEvent = (event: Event) => {
+  db.get(EVENT_TABLE).push(event).write();
+};
+
+export const getEventsByHours = (offset: number) => {
+  let offsetInMilliseconds = offset * OneDay;
+  let currentStartDayInMilliseconds = moment().startOf("day").valueOf();
+  let currentEndDayInMilliseconds = moment().endOf("day").valueOf();
+  let startDate = currentStartDayInMilliseconds - offsetInMilliseconds;
+  let endDate = currentEndDayInMilliseconds - offsetInMilliseconds;
+  console.log(moment(startDate));
+  console.log(moment(endDate));
+  let filtered = db
+    .get(EVENT_TABLE)
+    .filter((event: Event) => {
+      return event.date > startDate && event.date < endDate;
+    })
+    .sort((event1: Event, event2: Event) => {
+      return event1.date - event2.date;
+    })
+    .groupBy((event: Event) => {
+      return moment(event.date).hour() > 9
+        ? `${moment(event.date).hour()}:00`
+        : `0${moment(event.date).hour()}:00`;
+    })
+    .value();
+
+  for (let key in filtered) {
+    filtered[key] = filtered[key].filter((value, i) => filtered[key].indexOf(value) === i);
+  }
+  interface HoursArray {
+    hour: string;
+    count: number;
+  }
+
+  let hoursArray: HoursArray[] = [];
+
+  for (let i = 0; i < 24; i++) {
+    if (i < 10) {
+      hoursArray.push({ hour: `0${i}:00`, count: 0 });
+    } else {
+      hoursArray.push({ hour: `${i}:00`, count: 0 });
+    }
+  }
+
+  for (let key in filtered) {
+    for (let i = 0; i < hoursArray.length; i++) {
+      if (key === hoursArray[i].hour) {
+        hoursArray[i] = { hour: key, count: filtered[key].length };
+      }
+    }
+  }
+
+  return hoursArray;
+};
+interface weeklyRetentionObject {
+  registrationWeek: number; //launch is week 0 and so on
+  newUsers: number; // how many new user have joined this week
+  weeklyRetention: number[]; // for every week since, what percentage of the users came back. weeklyRetention[0] is always 100% because it's the week of registration
+  start: string; //date string for the first day of the week
+  end: string; //date string for the first day of the week
+}
+
+export const getWeeklyRetention = (dayZero: number) => {
+  let startDay = moment(new Date(Number(dayZero))).startOf('day').valueOf();
+  console.log(moment(startDay));
+  
+  const currentDay = Date.now()
+  const signupEvents: Event[] = db
+    .get("events")
+    .filter((event: Event) => event.name === "signup")
+    .orderBy("date")
+    .value();
+  const loginEvents: Event[] = db
+    .get("events")
+    .filter((event: Event) => event.name === "login")
+    .orderBy("date")
+    .value();
+
+    const endWeekDates: number[] = []
+
+    for(let d = startDay ; d <= currentDay + OneWeek; d+=OneWeek ){
+      if(moment(d+OneWeek).hour() === 23){
+        endWeekDates.push(moment(d+OneWeek + OneDay).startOf('day').valueOf());
+      }else {
+        endWeekDates.push(d+OneWeek)
+      }
+      
+    }
+
+    const retention = endWeekDates.map((endWeek, index) => {
+      const newUsers = signupEvents.filter((event: Event) => {
+        return event.date < endWeek && event.date > endWeek - OneWeek
+      })
+      
+    let usersSessionsArray: string[] = newUsers.map((event: Event) => {
+      return event.distinct_user_id
+    })
+
+    console.log(index, usersSessionsArray);
+    
+      let retentionArray: number[] = [100]
+      for (let i = 1; i < endWeekDates.length - 1 - index; i++) {
+        let filteredLoginUsers = loginEvents.filter((event: Event) => {
+          return event.date > moment(endWeek).add(i - 1, 'weeks').valueOf() && event.date < moment(endWeek).add(i, 'weeks').valueOf()
+        })   
+        
+    
+        
+        let filtered = usersSessionsArray.filter((id: string) => {
+          return filteredLoginUsers.some((event: Event) => event.distinct_user_id === id)
+        })
+
+              
+        if (newUsers.length !==0) {
+          retentionArray.push(Math.round((filtered.length / usersSessionsArray.length) * 100))
+        } else {
+          retentionArray.push(0)
+        }
+      }
+      
+      
+      return {
+        registrationWeek: index + 1,
+        start: moment(endWeek - OneWeek).format('DD-MM-YYYY'),
+        end: moment(endWeek).format('DD-MM-YYYY'),
+        newUsers: newUsers.length,      
+        weeklyRetention: retentionArray
+      }
+    })
+
+    let sliceRetention = retention.slice(0, -1)
+  
+    
+
+    return sliceRetention
+
+
+
+  
 };
 
 export const getAllUsers = () => db.get(USER_TABLE).value();
@@ -862,6 +1087,5 @@ export const getTransactionsBy = (key: string, value: string) =>
 
 /* istanbul ignore next */
 export const getTransactionsByUserId = (userId: string) => getTransactionsBy("receiverId", userId);
-
 
 export default db;

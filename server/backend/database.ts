@@ -164,31 +164,6 @@ export const getWeekEvents = (offset: number) => {
   }
 
   return answerArray;
-
-  // let offsetInMilliseconds = offset * OneDay;
-  // console.log(moment(currentDayInMilliseconds));
-  // let startDate = moment(currentDayInMilliseconds - offsetInMilliseconds).endOf("day").valueOf();
-  // let endDate = moment(startDate - OneDay * 7).startOf('day').valueOf();
-  // console.log(moment(startDate));
-  // console.log(moment(endDate));
-
-  // let filtered = db
-  //   .get(EVENT_TABLE)
-  //   .filter((event: Event) => {
-  //     return event.date < startDate && event.date > endDate;
-  //   })
-  //   .sort((event1: Event, event2: Event) => {
-  //     return event1.date - event2.date;
-  //   })
-  //   .groupBy((event: Event) => {
-  //     const currentDate = moment(event.date);
-  //     return currentDate.format("YYYY/MM/DD");
-  //   })
-  //   .value();
-
-  // for (let key in filtered) {
-  //   filtered[key] = uniqBy("session_id", filtered[key]);
-  // }
 };
 
 export const createEvent = (event: Event) => {

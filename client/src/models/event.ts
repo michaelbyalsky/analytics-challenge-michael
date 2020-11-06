@@ -15,6 +15,8 @@ export interface AllFiltered {
   more: boolean;
 }
 
+export type CustomizedTablesType = number[] | undefined;
+
 export interface CollapsibleTableProps {
   chartsData: AllFiltered;
   setOffset: Function;

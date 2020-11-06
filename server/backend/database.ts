@@ -123,7 +123,6 @@ export const getWeekEvents = (offset: number) => {
   let startDate = moment(currentDayInMilliseconds - OneDay * 6 - Offset)
     .startOf("day")
     .valueOf();
-  console.log(moment(startDate));
   const datesArray = db
     .get(EVENT_TABLE)
     .filter((event: Event) => event.date > startDate && event.date <= endDate)
@@ -152,10 +151,7 @@ export const getWeekEvents = (offset: number) => {
 
   for (let i = 0; i < 7; i++) {
     answerArray[i] = { date: moment(startDate + OneHour + OneDay*i).format('YYYY-MM-DD'), count: 0 }
-  }
-
-  console.log(answerArray);
-  
+  }  
 
   let index = 0;
   for (let key in datesArray) {
@@ -176,8 +172,6 @@ export const getEventsByHours = (offset: number) => {
   let currentEndDayInMilliseconds = moment().endOf("day").valueOf();
   let startDate = currentStartDayInMilliseconds - offsetInMilliseconds;
   let endDate = currentEndDayInMilliseconds - offsetInMilliseconds;
-  console.log(moment(startDate));
-  console.log(moment(endDate));
   let filtered = db
     .get(EVENT_TABLE)
     .filter((event: Event) => {
@@ -230,9 +224,7 @@ interface weeklyRetentionObject {
 }
 
 export const getWeeklyRetention = (dayZero: number) => {
-  let startDay = moment(new Date(Number(dayZero))).startOf('day').valueOf();
-  console.log(moment(startDay));
-  
+  let startDay = moment(new Date(Number(dayZero))).startOf('day').valueOf();  
   const currentDay = Date.now()
   const signupEvents: Event[] = db
     .get("events")
@@ -264,8 +256,6 @@ export const getWeeklyRetention = (dayZero: number) => {
     let usersSessionsArray: string[] = newUsers.map((event: Event) => {
       return event.distinct_user_id
     })
-
-    console.log(index, usersSessionsArray);
     
       let retentionArray: number[] = [100]
       for (let i = 1; i < endWeekDates.length - 1 - index; i++) {
@@ -273,20 +263,16 @@ export const getWeeklyRetention = (dayZero: number) => {
           return event.date > moment(endWeek).add(i - 1, 'weeks').valueOf() && event.date < moment(endWeek).add(i, 'weeks').valueOf()
         })   
         
-    
-        
         let filtered = usersSessionsArray.filter((id: string) => {
           return filteredLoginUsers.some((event: Event) => event.distinct_user_id === id)
         })
-
-              
+      
         if (newUsers.length !==0) {
           retentionArray.push(Math.round((filtered.length / usersSessionsArray.length) * 100))
         } else {
           retentionArray.push(0)
         }
       }
-      
       
       return {
         registrationWeek: index + 1,
@@ -299,8 +285,6 @@ export const getWeeklyRetention = (dayZero: number) => {
 
     let sliceRetention = retention.slice(0, -1)
   
-    
-
     return sliceRetention
 
 

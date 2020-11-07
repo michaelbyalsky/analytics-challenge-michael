@@ -26,10 +26,6 @@ interface Filter {
   offset: number;
 }
 
-// interface EventObj {
-//   "events": object[]
-// }
-
 router.get("/all", (req: Request, res: Response) => {
   try {
     const allEventsData: any = getAllEvents();
@@ -88,7 +84,6 @@ router.get("/all-filtered", (req: Request, res: Response) => {
 router.get("/by-days/:offset", (req: Request, res: Response) => {
   try {
     const offset: number = parseInt(req.params.offset);
-    console.log(offset);
     const totalEventsByDay = getWeekEvents(offset);
     res.json(totalEventsByDay);
   } catch (err) {
@@ -117,7 +112,6 @@ const myDayZero = today-5*OneWeek
 
 router.get("/retention", (req: Request, res: Response) => {
   const { dayZero } = req.query;
-  console.log(dayZero);
   
   let weeklyRetention = getWeeklyRetention(dayZero || myDayZero)
   res.json(weeklyRetention);

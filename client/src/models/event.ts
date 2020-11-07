@@ -10,6 +10,18 @@ export interface Event {
   geolocation: GeoLocation;
 }
 
+export interface AllFiltered {
+  events: Event[];
+  more: boolean;
+}
+
+export type CustomizedTablesType = number[] | undefined;
+
+export interface CollapsibleTableProps {
+  chartsData: AllFiltered;
+  setOffset: Function;
+}
+
 export interface weeklyRetentionObject {
   registrationWeek:number;
   newUsers:number;
